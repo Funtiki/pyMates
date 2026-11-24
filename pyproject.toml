@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "personal-assistant"
+version = "0.1.0"
+description = "CLI personal assistant: address book with birthdays and notes"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "colorama>=0.4.6",
+    "prettytable>=3.12",
+    "prompt_toolkit>=3.0",
+]
+
+[project.optional-dependencies]
+dev = ["black", "flake8", "pydocstyle", "pytest"]
+
+[project.scripts]
+assistant = "personal_assistant.app:main"
+
+[tool.setuptools.packages.find]
+include = ["personal_assistant*"]
+
+[tool.black]
+line-length = 88
+
+[tool.pydocstyle]
+# Перевіряємо лише наявність docstring у модулях, класах і функціях (і в тестах)
+match = '.*\.py'
+select = "D100,D101,D102,D103,D104,D105,D106,D107"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,0 +1,333 @@
+# Personal Assistant — PyMates
+
+Консольний «персональний помічник»: адресна книга з днями народження та нотатки.
+
+- зберігає контакти: ім'я, телефони, email, адреса, день народження;
+- показує, у кого день народження в найближчі N днів;
+- перевіряє телефон, email та інші поля під час введення і перепитує, якщо значення некоректне;
+- шукає контакти за будь-яким полем;
+- редагує та видаляє контакти;
+- нотатки — *у розробці*.
+
+## Вимоги
+
+- Python **3.10** або новіший
+- Git
+
+Перевірити версію Python:
+
+```bash
+python3 --version     # macOS / Linux
+```
+
+```powershell
+py --version          # Windows
+```
+
+## Встановлення
+
+### macOS / Linux
+
+```bash
+git clone https://github.com/natahiko/pyMates.git
+cd pyMates
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Windows (PowerShell)
+
+```powershell
+git clone https://github.com/natahiko/pyMates.git
+cd pyMates
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+> Якщо PowerShell не дає активувати середовище, виконайте один раз
+> `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+> У звичайному `cmd` активація: `.venv\Scripts\activate.bat`.
+
+### Встановлення як пакета (необов'язково)
+
+Після цього застосунок запускається командою `assistant` з будь-якої теки
+(поки активне віртуальне середовище):
+
+```bash
+pip install -e .
+```
+
+## Запуск
+
+З кореня репозиторію, з активованим віртуальним середовищем:
+
+```bash
+python main.py
+```
+
+Або так:
+
+```bash
+python -m personal_assistant
+```
+
+Або, якщо встановили як пакет:
+
+```bash
+assistant
+```
+
+Вийти: `exit`, `close`, `Ctrl+C` або `Ctrl+D`. Дані зберігаються після кожної команди.
+
+## Сторонні бібліотеки
+
+| Бібліотека | Для чого |
+|---|---|
+| [prompt_toolkit](https://python-prompt-toolkit.readthedocs.io/) | автодоповнення команд клавішею `Tab`, історія команд стрілками ↑/↓ |
+| [colorama](https://pypi.org/project/colorama/) | кольоровий вивід: успіх зеленим, помилки червоним, підказки жовтим (працює і у Windows) |
+| [prettytable](https://pypi.org/project/prettytable/) | вивід контактів і днів народження таблицями |
+
+Для розробки додатково: `black` (форматування), `flake8` (перевірка PEP 8), `pydocstyle` (наявність docstring), `pytest` (тести).
+
+## Команди
+
+Введіть `help`, щоб побачити список у самому застосунку.
+Регістр імен не важливий: `john` і `John` — той самий контакт.
+Ім'я може складатися з кількох слів: `edit John Smith email ...`.
+
+### Загальні
+
+| Команда | Опис |
+|---|---|
+| `hello` | привітання |
+| `help` | список усіх команд |
+| `exit` / `close` | зберегти й вийти |
+
+### Контакти
+
+| Команда | Опис |
+|---|---|
+| `add [name]` | додати контакт; застосунок по черзі питає телефони, email, адресу, день народження |
+| `all` | усі контакти таблицею |
+| `show <name>` | один контакт |
+| `search <text>` | пошук за ім'ям, телефоном, email, адресою або датою народження |
+| `edit <name> [field] [value]` | змінити поле: `name`, `phone`, `email`, `address`, `birthday` |
+| `add-phone <name> [phone]` | додати ще один телефон |
+| `remove-phone <name> [phone]` | видалити телефон (без номера — вибір зі списку) |
+| `clear <name> <field>` | очистити `phones`, `email`, `address` або `birthday` |
+| `delete <name>` | видалити контакт (з підтвердженням) |
+| `birthdays [days]` | дні народження від сьогодні до N днів уперед, за замовчуванням 7 |
+
+### Формати значень
+
+| Поле | Формат | Приклад |
+|---|---|---|
+| Ім'я | 2–50 символів: літери, пробіл, `-`, `'`, `.` | `John Smith`, `Anna-Maria` |
+| Телефон | 10 цифр; `+38`, пробіли, дужки й дефіси прибираються | `0661234567`, `+38 (066) 123-45-67` |
+| Email | `name@domain.tld` | `john@example.com` |
+| Адреса | довільний текст, 3–200 символів | `Kyiv, Khreshchatyk St, 1, apt 5` |
+| День народження | `DD.MM.YYYY`, не в майбутньому | `25.11.1990` |
+
+### Як працює перевірка введення
+
+Якщо значення некоректне, застосунок пояснює, що не так, і питає ще раз.
+У будь-якому діалозі можна ввести `cancel` (або натиснути `Ctrl+C`) — дія
+скасовується, нічого не змінюється. У майстрі `add` необов'язкове поле
+пропускається порожнім `Enter`.
+
+### Приклади
+
+Додати контакт:
+
+```text
+Enter a command: add John Smith
+New contact. Type 'cancel' at any step to abort.
+Phone (Enter to skip): 066 123 45 67
+Another phone (Enter to skip):
+Email (Enter to skip): john@
+Invalid email. Use a format like name@example.com. Try again or type 'cancel' to abort.
+Email (Enter to skip): john@example.com
+Address (e.g. Kyiv, Khreshchatyk St, 1, apt 5) (Enter to skip): Kyiv, Khreshchatyk St, 1
+Birthday (DD.MM.YYYY) (Enter to skip): 25.11.1990
+Contact 'John Smith' added.
+```
+
+Змінити поле одним рядком або через меню:
+
+```text
+Enter a command: edit John Smith email j.smith@mail.com
+Contact updated.
+
+Enter a command: edit John Smith
+What do you want to change for John Smith?
+  1. name
+  2. phone
+  3. email
+  4. address
+  5. birthday
+Field: 1
+New name: Johnny Smith
+Contact updated.
+```
+
+Пошук і дні народження:
+
+```text
+Enter a command: search kyiv
+Found 1 contact(s):
+┌──────────────┬────────────┬──────────────────┬──────────────────────────┬────────────┐
+│ Name         │ Phones     │ Email            │ Address                  │ Birthday   │
+├──────────────┼────────────┼──────────────────┼──────────────────────────┼────────────┤
+│ Johnny Smith │ 0661234567 │ j.smith@mail.com │ Kyiv, Khreshchatyk St, 1 │ 25.11.1990 │
+└──────────────┴────────────┴──────────────────┴──────────────────────────┴────────────┘
+
+Enter a command: birthdays 10
+Birthdays in the next 10 day(s):
+┌──────────────┬────────────┬──────────┬───────┐
+│ Name         │ Date       │ When     │ Turns │
+├──────────────┼────────────┼──────────┼───────┤
+│ Johnny Smith │ 25.11.2026 │ tomorrow │ 36    │
+└──────────────┴────────────┴──────────┴───────┘
+```
+
+Інші приклади:
+
+```text
+add-phone John Smith +380501112233
+remove-phone John Smith 0501112233
+clear John Smith address
+delete John Smith
+```
+
+## Збереження даних
+
+Формат — **pickle** (стандартна бібліотека Python): об'єкти зберігаються
+разом зі своїми класами, тож не треба писати перетворення в JSON і назад.
+
+Файли лежать у домашній теці користувача:
+
+- macOS / Linux: `~/.personal_assistant/addressbook.pkl`
+- Windows: `C:\Users\<user>\.personal_assistant\addressbook.pkl`
+
+Теку можна змінити змінною середовища `PERSONAL_ASSISTANT_DATA_DIR`
+(зручно для демо з окремим набором даних). Запис атомарний: спершу у
+тимчасовий файл, потім підміна. Пошкоджений файл не перезаписується мовчки,
+а відкладається поруч як `*.broken`.
+
+## Структура проєкту
+
+```text
+main.py                       # запуск: python main.py
+personal_assistant/
+├── app.py                    # головний цикл, prompt_toolkit
+├── context.py                # AppContext: усі дані + завантаження/збереження
+├── storage.py                # save_data / load_data (pickle)
+├── models/                   # класи даних, без вводу-виводу
+│   ├── fields.py             # Field, Name, Phone, Email, Address, Birthday
+│   ├── record.py             # Record — один контакт
+│   └── address_book.py       # AddressBook — пошук, дні народження
+└── cli/                      # усе, що стосується консолі
+    ├── registry.py           # @command — реєстрація команд
+    ├── decorators.py         # input_error — помилки -> повідомлення
+    ├── prompts.py            # ask_valid, confirm, choose, cancel
+    ├── ui.py                 # кольори й таблиці
+    ├── parser.py             # розбір введеного рядка
+    └── handlers/
+        ├── general.py        # hello, help
+        └── contacts.py       # команди контактів
+tests/                        # pytest
+```
+
+## Для розробників
+
+### Налаштування
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Перед кожним PR:
+
+```bash
+black .
+```
+
+```bash
+flake8
+```
+
+```bash
+pydocstyle personal_assistant tests
+```
+
+```bash
+pytest
+```
+
+### Як додати нову команду
+
+1. Створіть модуль у `personal_assistant/cli/handlers/`, наприклад `notes.py`.
+2. Зареєструйте команду декоратором — вона одразу з'явиться в `help` і в автодоповненні:
+
+   ```python
+   from ...context import AppContext
+   from .. import prompts, ui
+   from ..registry import command, require_args
+
+   GROUP = "Notes"
+
+
+   @command("add-note", "add-note [text]", "add a note", GROUP)
+   def add_note(args: list[str], ctx: AppContext) -> str:
+       """Додати нотатку."""
+       text = prompts.retry_until_valid(" ".join(args), "Text", ...)
+       ...
+       return ui.success("Note added.")
+   ```
+
+3. Додайте імпорт модуля в `personal_assistant/cli/handlers/__init__.py`.
+
+Помилки валідації кидайте як `ValueError("текст для користувача")`, «не знайдено» —
+як `NotFoundError("Note 3 not found.")`; декоратор сам покаже їх червоним.
+
+### Як додати нову колекцію даних (нотатник)
+
+1. Клас моделі — у `personal_assistant/models/` (наприклад, `note.py`, `notebook.py`).
+2. У `personal_assistant/context.py` додайте поле в `AppContext` і рядки в `load` / `save`:
+
+   ```python
+   NOTEBOOK_FILE = "notebook.pkl"
+
+   @dataclass
+   class AppContext:
+       book: AddressBook
+       notebook: Notebook
+
+       @classmethod
+       def load(cls) -> "AppContext":
+           return cls(
+               book=load_data(data_file(ADDRESS_BOOK_FILE), AddressBook),
+               notebook=load_data(data_file(NOTEBOOK_FILE), Notebook),
+           )
+
+       def save(self) -> None:
+           save_data(self.book, data_file(ADDRESS_BOOK_FILE))
+           save_data(self.notebook, data_file(NOTEBOOK_FILE))
+   ```
+
+### Стиль коду
+
+- PEP 8, довжина рядка 88 (як у black);
+- docstring у кожної функції, класу й модуля;
+- коментарі — лише до неочевидної логіки;
+- кожна задача — окрема гілка й pull request у `main`.
+
+## Команда
+
+| Роль | Учасник |
+|---|---|
+| Team Lead | _TBD_ |
+| Scrum Master | _TBD_ |
+| Developer | _TBD_ |
