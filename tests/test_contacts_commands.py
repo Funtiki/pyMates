@@ -1,32 +1,6 @@
-"""Тести команд для контактів з підставленим вводом користувача."""
-
-import pytest
+"""Тести команд для контактів з підставленим вводом (фікстури — у conftest.py)."""
 
 from personal_assistant.app import run_command
-from personal_assistant.cli import prompts
-from personal_assistant.context import AppContext
-from personal_assistant.models import AddressBook
-
-
-@pytest.fixture
-def ctx():
-    """Порожній контекст застосунку."""
-    return AppContext(book=AddressBook())
-
-
-@pytest.fixture
-def answers(monkeypatch):
-    """Черга відповідей, які отримають діалоги замість клавіатури."""
-    queue: list[str] = []
-
-    def fake_input(prompt):
-        """Повернути наступну відповідь з черги."""
-        if not queue:
-            raise AssertionError(f"Unexpected prompt: {prompt}")
-        return queue.pop(0)
-
-    monkeypatch.setattr(prompts, "input_func", fake_input)
-    return queue
 
 
 def test_add_reprompts_invalid_values(ctx, answers):

@@ -201,6 +201,31 @@ clear John Smith address
 delete John Smith
 ```
 
+## Тестові дані
+
+Щоб заповнити книгу 10 тестовими контактами (для перевірки чи демо):
+
+```bash
+python -m personal_assistant.demo_data
+```
+
+Дні народження рахуються від сьогоднішньої дати, тож `birthdays` завжди
+покаже кількох людей: сьогодні, завтра, за 3, 6 і 7 днів, а `birthdays 14` —
+ще одну людину. Якщо в книзі вже є контакти, скрипт спитає підтвердження
+і збереже стару книгу як `addressbook.pkl.bak` (`--force` — без питання).
+
+Щоб тестові дані не змішувались із робочими, можна взяти окрему теку:
+
+```bash
+PERSONAL_ASSISTANT_DATA_DIR=./demo python -m personal_assistant.demo_data
+```
+
+```bash
+PERSONAL_ASSISTANT_DATA_DIR=./demo python main.py
+```
+
+У Windows (PowerShell) спершу `$env:PERSONAL_ASSISTANT_DATA_DIR = "demo"`, далі ті самі команди без префікса.
+
 ## Збереження даних
 
 Формат — **pickle** (стандартна бібліотека Python): об'єкти зберігаються
@@ -224,6 +249,7 @@ personal_assistant/
 ├── app.py                    # головний цикл, prompt_toolkit
 ├── context.py                # AppContext: усі дані + завантаження/збереження
 ├── storage.py                # save_data / load_data (pickle)
+├── demo_data.py              # тестові контакти: python -m personal_assistant.demo_data
 ├── models/                   # класи даних, без вводу-виводу
 │   ├── fields.py             # Field, Name, Phone, Email, Address, Birthday
 │   ├── record.py             # Record — один контакт
@@ -237,7 +263,13 @@ personal_assistant/
     └── handlers/
         ├── general.py        # hello, help
         └── contacts.py       # команди контактів
-tests/                        # pytest
+tests/                        # автотести (pytest), див. розділ «Тести»
+├── conftest.py               # спільні фікстури: ctx, answers; вимикає кольори
+├── test_models.py            # валідація полів, Record, AddressBook
+├── test_contacts_commands.py # команди контактів з імітацією вводу
+├── test_storage.py           # збереження й пошкоджені файли
+├── test_demo_data.py         # генератор тестових даних
+└── test_ui.py                # кольори й таблиці
 ```
 
 ## Для розробників
@@ -265,6 +297,68 @@ pydocstyle personal_assistant tests
 ```bash
 pytest
 ```
+
+### Тести
+
+Автотести перевіряють логіку без ручного вводу — за секунду, після кожної зміни.
+Запуск із кореня проєкту (потрібен `requirements-dev.txt`):
+
+```bash
+pytest
+```
+
+Корисні варіанти:
+
+```bash
+pytest -v                          # кожен тест окремим рядком
+```
+
+```bash
+pytest tests/test_models.py        # лише один файл
+```
+
+```bash
+pytest -k email                    # лише тести, у назві яких є "email"
+```
+
+У PyCharm: правий клік на теці `tests` → **Run 'pytest in tests'**.
+Якщо PyCharm запускає тести не через pytest, оберіть його в
+Settings → Tools → Python Integrated Tools → Default test runner.
+
+Що покривають тести:
+
+| Файл | Що перевіряє |
+|---|---|
+| `test_models.py` | валідацію імені, телефону, email, адреси й дати; телефони контакту; пошук за будь-яким полем; перейменування, видалення, дублікати; дні народження в межах N днів, зокрема перехід через Новий рік |
+| `test_contacts_commands.py` | команди `add`, `edit`, `search`, `delete` так, як їх вводить користувач: повторний запит після помилки, `cancel`, підтвердження y/n, зрозумілі повідомлення замість падінь |
+| `test_storage.py` | збереження й завантаження; відсутній файл; пошкоджений файл відкладається як `.broken` |
+| `test_demo_data.py` | тестові контакти проходять валідацію, а `birthdays` завжди має що показати (і 29 лютого теж) |
+| `test_ui.py` | коли вмикаються кольори, і що вони не ламають таблиці |
+
+#### Як написати тест для своєї команди
+
+Діалоги читають ввід через `prompts.input_func`, тож у тесті його можна
+підмінити списком готових відповідей. Для цього в `tests/conftest.py` є
+фікстури, доступні в будь-якому файлі тестів без імпорту:
+
+- `ctx` — порожній `AppContext` (дані лише в пам'яті, файли не чіпаються);
+- `answers` — список відповідей, які по черзі отримають діалоги.
+
+Приклад:
+
+```python
+from personal_assistant.app import run_command
+
+
+def test_add_note_reprompts_empty_text(ctx, answers):
+    """Порожній текст нотатки перепитується."""
+    answers += ["", "Buy milk"]  # спершу порожньо, потім нормальний текст
+    result = run_command("add-note", ctx)
+    assert "added" in result
+    assert answers == []  # усі відповіді використані
+```
+
+Кольори в тестах вимкнені (`conftest.py`), тож результат команди — звичайний текст.
 
 ### Як додати нову команду
 

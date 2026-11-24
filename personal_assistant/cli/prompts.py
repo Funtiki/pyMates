@@ -24,7 +24,7 @@ class OperationCancelled(Exception):
 def ask(prompt: str) -> str:
     """Запитати рядок; ``cancel`` або Ctrl+C/Ctrl+D скасовують усю дію."""
     try:
-        answer = input_func(prompt).strip()
+        answer = input_func(ui.prompt(prompt)).strip()
     except (EOFError, KeyboardInterrupt):
         print()
         raise OperationCancelled from None
@@ -85,7 +85,7 @@ def confirm(prompt: str) -> bool:
 def choose(prompt: str, options: list[str]) -> int:
     """Показати нумерований список і повернути індекс обраного варіанта."""
     for number, option in enumerate(options, start=1):
-        print(f"  {number}. {option}")
+        print(f"  {ui.highlight(str(number) + '.')} {option}")
 
     def parse(answer: str) -> int:
         """Номер варіанта (з 1) -> індекс у списку (з 0)."""

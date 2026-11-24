@@ -63,7 +63,7 @@ def _get_exact(args: list[str], book: AddressBook) -> Record:
 def _contact_row(record: Record) -> tuple[str, ...]:
     """Рядок таблиці контактів; кожен телефон з нового рядка."""
     return (
-        record.name.value,
+        ui.highlight(record.name.value),
         "\n".join(p.value for p in record.phones),
         str(record.email or ""),
         str(record.address or ""),
@@ -164,7 +164,8 @@ def search_contacts(args: list[str], ctx: AppContext) -> str:
     found = ctx.book.search(query)
     if not found:
         return ui.warning(f"No contacts match '{query}'.")
-    return f"Found {len(found)} contact(s):\n" + contacts_table(found)
+    header = ui.title(f"Found {len(found)} contact(s) for '{query}':")
+    return header + "\n" + contacts_table(found)
 
 
 def _edit_phone(record: Record, value: Optional[str]) -> None:
@@ -307,9 +308,9 @@ def _parse_days(args: list[str]) -> int:
 def _days_label(days_left: int) -> str:
     """Людський опис відстані до дня народження."""
     if days_left == 0:
-        return "today"
+        return ui.accent("today!")
     if days_left == 1:
-        return "tomorrow"
+        return ui.warning("tomorrow")
     return f"in {days_left} days"
 
 
@@ -327,12 +328,12 @@ def upcoming_birthdays(args: list[str], ctx: AppContext) -> str:
         return ui.warning(f"No birthdays in the next {days} day(s).")
     rows = (
         (
-            u.record.name.value,
+            ui.highlight(u.record.name.value),
             u.next_date.strftime(DATE_FORMAT),
             _days_label(u.days_left),
             u.turns,
         )
         for u in upcoming
     )
-    title = ui.info(f"Birthdays in the next {days} day(s):")
-    return title + "\n" + ui.table(("Name", "Date", "When", "Turns"), rows)
+    header = ui.title(f"Birthdays in the next {days} day(s):")
+    return header + "\n" + ui.table(("Name", "Date", "When", "Turns"), rows)

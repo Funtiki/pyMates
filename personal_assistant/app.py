@@ -5,6 +5,7 @@ from typing import Callable
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.formatted_text import ANSI
 
 from .cli import handlers  # noqa: F401  (реєструє всі команди)
 from .cli import ui
@@ -24,12 +25,13 @@ def _make_reader() -> Callable[[str], str]:
     подано через pipe), prompt_toolkit не працює, тож беремо звичайний input.
     """
     if not sys.stdin.isatty():
-        return input
+        return lambda text: input(ui.prompt(text))
     completer = WordCompleter(
         [*COMMANDS, *EXIT_COMMANDS], ignore_case=True, sentence=True
     )
     session: PromptSession[str] = PromptSession(completer=completer)
-    return lambda prompt: session.prompt(prompt)
+    # ANSI(): prompt_toolkit сам не розуміє кольорові коди colorama
+    return lambda text: session.prompt(ANSI(ui.prompt(text)))
 
 
 def run_command(user_input: str, ctx: AppContext) -> str:
@@ -48,21 +50,22 @@ def main() -> None:
     ctx = AppContext.load()
     read = _make_reader()
     print(
-        ui.info("Welcome to the personal assistant! Type 'help' to see all commands.")
+        ui.title("Welcome to the personal assistant!")
+        + ui.info(" Type 'help' to see all commands.")
     )
     try:
         while True:
             try:
                 user_input = read(PROMPT)
             except (EOFError, KeyboardInterrupt):  # Ctrl+D / Ctrl+C
-                print("\nGood bye!")
+                print("\n" + ui.title("Good bye!"))
                 break
 
             command, _ = parse_input(user_input)
             if not command:
                 continue
             if command in EXIT_COMMANDS:
-                print("Good bye!")
+                print(ui.title("Good bye!"))
                 break
 
             print(run_command(user_input, ctx))

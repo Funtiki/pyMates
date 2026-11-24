@@ -9,3 +9,6 @@ build/
 .pytest_cache/
 *.pkl.tmp
 *.pkl.broken
+demo/
+.idea/
+.vscode/
